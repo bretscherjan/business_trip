@@ -1,6 +1,6 @@
 package ch.clip.trips.service;
 
-import ch.clip.trips.model.User;
+import ch.clip.trips.data.User;
 import ch.clip.trips.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

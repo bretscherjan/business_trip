@@ -1,6 +1,6 @@
 package ch.clip.trips.controller;
 
-import ch.clip.trips.model.User;
+import ch.clip.trips.data.User;
 import ch.clip.trips.service.UserService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+//@RequestMapping("/api/auth")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8080"})
 public class LoginController {
 
