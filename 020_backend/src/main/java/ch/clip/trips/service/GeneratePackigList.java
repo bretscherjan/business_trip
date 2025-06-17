@@ -1,18 +1,22 @@
 package ch.clip.trips.service;
 
+import ch.clip.trips.data.PackingListItem;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.*;
 import java.net.URI;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GeneratePackigList {
 
-    private String aiResponse;
+    private List<PackingListItem> packingListItems;
 
     public GeneratePackigList(String ort, String geschlecht, String startdatum, String enddatum, String prompt){
-        System.out.println("Test2");
         // API-Key
         String apiKey = "3a3c652638364fd2a3d7ff3f19ffe97c";
 
@@ -43,32 +47,49 @@ public class GeneratePackigList {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Test3");
 
         // HTTP-Client & -Response
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = null;
         try {
             response = client.send(request, BodyHandlers.ofString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
-        System.out.println("Test4");
-
-        // Status prüfen und ausgeben
-        if (response.statusCode() != 200) {
-            //throw new RuntimeException("Fehler: " + response.statusCode());
-        }
-
-        aiResponse = response.body();
-        System.out.println(response.body());
-        System.out.println("Test5");
+        parseResponse(response.body());
     }
 
-    public String getAiResponse() {
-        return aiResponse;
+    private void parseResponse(String aiResponse) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(aiResponse);
+
+            // Get the content from the response
+            String content = rootNode.path("choices")
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText();
+
+            // Split the content by newlines and create PackingListItem objects
+            packingListItems = new ArrayList<>();
+            String[] items = content.split("\n");
+
+            for (String item : items) {
+                if (!item.trim().isEmpty()) {
+                    PackingListItem packingItem = new PackingListItem();
+                    packingItem.setName(item.trim());
+                    packingItem.setTickedOff(false);
+                    packingListItems.add(packingItem);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing API response", e);
+        }
+    }
+
+    public List<PackingListItem> getPackingListItems() {
+        return packingListItems;
     }
 }

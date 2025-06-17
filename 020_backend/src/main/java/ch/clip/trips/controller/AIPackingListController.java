@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,16 +42,22 @@ public class AIPackingListController {
         return ResponseEntity.ok(responseItems);
     }
 
-    // TODO: mit datenbank verbinden idPerson, idTrip als fremdschlüssel
     @PostMapping("/Generate")
-    public ResponseEntity<List<PackingListItemData>> createPackingList(@RequestParam Long idPerson,
+    public ResponseEntity<List<PackingListItem>> createPackingList(@RequestParam Long idPerson,
                                                           @RequestParam Long idTrip,
                                                           @RequestBody PackingListGenerationData generationData) {
         // AI Abfrage
-        System.out.println("Test");
         GeneratePackigList generatePackigList = new GeneratePackigList(generationData.getZielohrt(), generationData.getGeschlecht(), generationData.getStartDatum(), generationData.getEndDatum(), generationData.getBesonderheiten());
-        System.out.println(generatePackigList.getAiResponse());
-        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+        
+        List<PackingListItem> savedItems = new ArrayList<>();
+        for (PackingListItem element : generatePackigList.getPackingListItems()) {
+            element.setPersonId(idPerson);
+            element.setTripId(idTrip);
+            PackingListItem savedItem = packingListItemRepository.save(element);
+            savedItems.add(savedItem);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedItems);
     }
 
     @DeleteMapping("/")
