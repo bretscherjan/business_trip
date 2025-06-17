@@ -4,6 +4,7 @@ import ch.clip.trips.data.User;
 import ch.clip.trips.service.UserService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +23,11 @@ public class LoginController {
             if (user != null) {
                 return ResponseEntity.ok(new LoginResponse(user.getToken()));
             } else {
-                return ResponseEntity.badRequest().body("Invalid username or password");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Login failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Login failed: " + e.getMessage());
         }
     }
 
@@ -35,7 +37,8 @@ public class LoginController {
             userService.logout(token);
             return ResponseEntity.ok().body("Logged out successfully");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Logout failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Logout failed: " + e.getMessage());
         }
     }
 

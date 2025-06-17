@@ -5,6 +5,7 @@ import ch.clip.trips.data.PackingListItem;
 import ch.clip.trips.data.PackingListItemData;
 import ch.clip.trips.repository.PackingListItemRepository;
 import ch.clip.trips.service.GeneratePackigList;
+import ch.clip.trips.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,17 @@ public class AIPackingListController {
     @Autowired
     private PackingListItemRepository packingListItemRepository;
 
+    @Autowired
+    private TokenService tokenService;
+
     @GetMapping("")
-    public ResponseEntity<List<PackingListItemData>> getPackingList(@RequestParam Long userId,
+    public ResponseEntity<List<PackingListItemData>> getPackingList(@RequestHeader("Authorization") String token,
                                                        @RequestParam Long tripId) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         List<PackingListItem> items = packingListItemRepository.findByUserIdAndTripId(userId, tripId);
         if (items.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -43,9 +52,14 @@ public class AIPackingListController {
     }
 
     @PostMapping("/Generate")
-    public ResponseEntity<List<PackingListItem>> createPackingList(@RequestParam Long userId,
+    public ResponseEntity<List<PackingListItem>> createPackingList(@RequestHeader("Authorization") String token,
                                                           @RequestParam Long tripId,
                                                           @RequestBody PackingListGenerationData generationData) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         // AI Abfrage
         GeneratePackigList generatePackigList = new GeneratePackigList(generationData.getZielohrt(), generationData.getGeschlecht(), generationData.getStartDatum(), generationData.getEndDatum(), generationData.getBesonderheiten());
         
@@ -61,16 +75,26 @@ public class AIPackingListController {
     }
 
     @DeleteMapping("/")
-    public ResponseEntity<Void> deleteAll(@RequestParam Long userId,
+    public ResponseEntity<Void> deleteAll(@RequestHeader("Authorization") String token,
                                           @RequestParam Long tripId) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         packingListItemRepository.deleteByUserIdAndTripId(userId, tripId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteItem(@RequestParam Long userId,
+    public ResponseEntity<Void> deleteItem(@RequestHeader("Authorization") String token,
                                            @RequestParam Long tripId,
                                            @PathVariable Long id) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         Optional<PackingListItem> item = packingListItemRepository.findById(id);
         if (item.isPresent() && item.get().getUserId().equals(userId) && item.get().getTripId().equals(tripId)) {
             packingListItemRepository.deleteById(id);
@@ -80,9 +104,14 @@ public class AIPackingListController {
     }
 
     @PostMapping("/addItem")
-    public ResponseEntity<PackingListItemData> addItem(@RequestParam Long userId,
+    public ResponseEntity<PackingListItemData> addItem(@RequestHeader("Authorization") String token,
                                                              @RequestParam Long tripId,
                                                              @RequestBody PackingListItemData itemData) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         PackingListItem item = new PackingListItem();
         item.setName(itemData.getName());
         item.setTickedOff(itemData.isTickedOff());
@@ -100,9 +129,14 @@ public class AIPackingListController {
 
     @PutMapping("/editItem/{id}")
     public ResponseEntity<PackingListItemData> updatePost(@PathVariable Long id,
-                                                          @RequestParam Long userId,
+                                                          @RequestHeader("Authorization") String token,
                                                           @RequestParam Long tripId,
                                                           @RequestBody PackingListItemData itemData) {
+        if (!tokenService.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        Long userId = tokenService.getUserIdFromToken(token);
         Optional<PackingListItem> item = packingListItemRepository.findById(id);
         if (item.isPresent() && item.get().getUserId().equals(userId) && item.get().getTripId().equals(tripId)) {
             PackingListItem existingItem = item.get();

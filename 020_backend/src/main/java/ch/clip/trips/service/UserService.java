@@ -20,12 +20,20 @@ public class UserService {
     }
 
     public User authenticate(String username, String password) {
+
+
+
+        System.out.println("tetetetetetetetetete");
+
         User user = userRepository.findByUsername(username);
 
         if (user != null && verifyPassword(password, user.getPasswordHash())) {
             String token = generateToken();
             user.setToken(token);
             userRepository.save(user);
+            User user1 = userRepository.findByToken(token);
+            System.out.println(token);
+            System.out.println(user1);
             return user;
         }
 
