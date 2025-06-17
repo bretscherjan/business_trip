@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface PackingListItemRepository extends JpaRepository<PackingListItem, Long> {
-    List<PackingListItem> findByPersonIdAndTripId(Long personId, Long tripId);
-    void deleteByPersonIdAndTripId(Long personId, Long tripId);
+    List<PackingListItem> findByUserIdAndTripId(Long userId, Long tripId);
+    void deleteByUserIdAndTripId(Long userId, Long tripId);
 } 

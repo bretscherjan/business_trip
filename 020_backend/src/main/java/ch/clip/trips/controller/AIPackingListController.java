@@ -23,9 +23,9 @@ public class AIPackingListController {
     private PackingListItemRepository packingListItemRepository;
 
     @GetMapping("")
-    public ResponseEntity<List<PackingListItemData>> getPackingList(@RequestParam Long idPerson,
-                                                       @RequestParam Long idTrip) {
-        List<PackingListItem> items = packingListItemRepository.findByPersonIdAndTripId(idPerson, idTrip);
+    public ResponseEntity<List<PackingListItemData>> getPackingList(@RequestParam Long userId,
+                                                       @RequestParam Long tripId) {
+        List<PackingListItem> items = packingListItemRepository.findByUserIdAndTripId(userId, tripId);
         if (items.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -43,16 +43,16 @@ public class AIPackingListController {
     }
 
     @PostMapping("/Generate")
-    public ResponseEntity<List<PackingListItem>> createPackingList(@RequestParam Long idPerson,
-                                                          @RequestParam Long idTrip,
+    public ResponseEntity<List<PackingListItem>> createPackingList(@RequestParam Long userId,
+                                                          @RequestParam Long tripId,
                                                           @RequestBody PackingListGenerationData generationData) {
         // AI Abfrage
         GeneratePackigList generatePackigList = new GeneratePackigList(generationData.getZielohrt(), generationData.getGeschlecht(), generationData.getStartDatum(), generationData.getEndDatum(), generationData.getBesonderheiten());
         
         List<PackingListItem> savedItems = new ArrayList<>();
         for (PackingListItem element : generatePackigList.getPackingListItems()) {
-            element.setPersonId(idPerson);
-            element.setTripId(idTrip);
+            element.setUserId(userId);
+            element.setTripId(tripId);
             PackingListItem savedItem = packingListItemRepository.save(element);
             savedItems.add(savedItem);
         }
@@ -61,18 +61,18 @@ public class AIPackingListController {
     }
 
     @DeleteMapping("/")
-    public ResponseEntity<Void> deleteAll(@RequestParam Long idPerson,
-                                          @RequestParam Long idTrip) {
-        packingListItemRepository.deleteByPersonIdAndTripId(idPerson, idTrip);
+    public ResponseEntity<Void> deleteAll(@RequestParam Long userId,
+                                          @RequestParam Long tripId) {
+        packingListItemRepository.deleteByUserIdAndTripId(userId, tripId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteItem(@RequestParam Long idPerson,
-                                           @RequestParam Long idTrip,
+    public ResponseEntity<Void> deleteItem(@RequestParam Long userId,
+                                           @RequestParam Long tripId,
                                            @PathVariable Long id) {
         Optional<PackingListItem> item = packingListItemRepository.findById(id);
-        if (item.isPresent() && item.get().getPersonId().equals(idPerson) && item.get().getTripId().equals(idTrip)) {
+        if (item.isPresent() && item.get().getUserId().equals(userId) && item.get().getTripId().equals(tripId)) {
             packingListItemRepository.deleteById(id);
             return ResponseEntity.ok().build();
         }
@@ -80,14 +80,14 @@ public class AIPackingListController {
     }
 
     @PostMapping("/addItem")
-    public ResponseEntity<PackingListItemData> addItem(@RequestParam Long idPerson,
-                                                             @RequestParam Long idTrip,
+    public ResponseEntity<PackingListItemData> addItem(@RequestParam Long userId,
+                                                             @RequestParam Long tripId,
                                                              @RequestBody PackingListItemData itemData) {
         PackingListItem item = new PackingListItem();
         item.setName(itemData.getName());
         item.setTickedOff(itemData.isTickedOff());
-        item.setPersonId(idPerson);
-        item.setTripId(idTrip);
+        item.setUserId(userId);
+        item.setTripId(tripId);
         
         PackingListItem savedItem = packingListItemRepository.save(item);
         
@@ -100,11 +100,11 @@ public class AIPackingListController {
 
     @PutMapping("/editItem/{id}")
     public ResponseEntity<PackingListItemData> updatePost(@PathVariable Long id,
-                                                          @RequestParam Long idPerson,
-                                                          @RequestParam Long idTrip,
+                                                          @RequestParam Long userId,
+                                                          @RequestParam Long tripId,
                                                           @RequestBody PackingListItemData itemData) {
         Optional<PackingListItem> item = packingListItemRepository.findById(id);
-        if (item.isPresent() && item.get().getPersonId().equals(idPerson) && item.get().getTripId().equals(idTrip)) {
+        if (item.isPresent() && item.get().getUserId().equals(userId) && item.get().getTripId().equals(tripId)) {
             PackingListItem existingItem = item.get();
             existingItem.setName(itemData.getName());
             existingItem.setTickedOff(itemData.isTickedOff());

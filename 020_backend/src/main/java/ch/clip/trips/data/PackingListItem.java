@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "packing_list_item")
+@Table(name = "packing_list")
 public class PackingListItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,8 +17,8 @@ public class PackingListItem {
     @Column(nullable = false)
     private boolean tickedOff;
 
-    @Column(name = "person_id", nullable = false)
-    private Long personId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "trip_id", nullable = false)
     private Long tripId;
