@@ -38,3 +38,24 @@ INSERT INTO packing_list (name, ticked_off, user_id, trip_id) VALUES
 ('Charger', false, 1, 2),
 ('Business Attire', false, 1, 2),
 ('Meeting Documents', false, 1, 2);
+
+-- Insert receipts for Berlin Conference (trip_id = 1)
+INSERT INTO receipt (name, description, amount, user_id, trip_id) VALUES
+('Hotel Berlin', '3 nights at Grand Hotel Berlin', 450.00, 1, 1),
+('Conference Ticket', 'Entry ticket for Tech Conference 2024', 299.99, 1, 1),
+('Taxi Rides', 'Various taxi rides during the conference', 85.50, 1, 1),
+('Restaurant Dinner', 'Business dinner with clients', 120.75, 1, 1),
+('Office Supplies', 'Notebooks and pens for the conference', 25.99, 1, 1);
+
+-- Insert receipts for Paris Meeting (trip_id = 2)
+INSERT INTO receipt (name, description, amount, user_id, trip_id) VALUES
+('Hotel Paris', '2 nights at Hotel de Paris', 320.00, 1, 2),
+('Client Lunch', 'Business lunch with client', 95.50, 1, 2),
+('Metro Tickets', 'Public transport in Paris', 35.00, 1, 2),
+('Coffee Meetings', 'Various coffee meetings', 45.75, 1, 2);
+
+-- Insert receipts for London Workshop (trip_id = 3)
+INSERT INTO receipt (name, description, amount, user_id, trip_id) VALUES
+('Workshop Materials', 'Training materials and handouts', 150.00, 2, 3),
+('Team Dinner', 'Group dinner with workshop participants', 180.50, 2, 3),
+('Transportation', 'Airport transfers and local transport', 75.25, 2, 3);

@@ -44,3 +44,14 @@ CREATE TABLE packing_list (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (trip_id) REFERENCES business_trip(id)
 );
+
+CREATE TABLE receipt (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    amount DECIMAL(10, 2) NOT NULL,
+    user_id BIGINT NOT NULL,
+    trip_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (trip_id) REFERENCES business_trip(id)
+);
