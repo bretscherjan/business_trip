@@ -8,19 +8,18 @@ import lombok.Setter;
 @Entity
 @Data
 @Table(name = "users")
-@Getter
-@Setter
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    int id;
+    private int id;
 
     @Column(nullable = false)
-    String username;
+    private String username;
 
     @Column(nullable = false, name = "password_hash")
-    String passwordHash;
+    private String passwordHash;
 
-    @Column(nullable = true)
-    String token;
+    @Column
+    private String token;
 }

@@ -2,8 +2,8 @@ package ch.clip.trips.service;
 
 import ch.clip.trips.data.User;
 import ch.clip.trips.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -13,18 +13,22 @@ import java.util.UUID;
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public User authenticate(String username, String password) {
         User user = userRepository.findByUsername(username);
+
         if (user != null && verifyPassword(password, user.getPasswordHash())) {
-            // Generate new token
             String token = generateToken();
             user.setToken(token);
             userRepository.save(user);
             return user;
         }
+
         return null;
     }
 
@@ -36,18 +40,22 @@ public class UserService {
         }
     }
 
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+    public String hashPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-512 algorithm not available", e);
+        }
     }
 
     private boolean verifyPassword(String inputPassword, String storedHash) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(inputPassword.getBytes(StandardCharsets.UTF_8));
-            String inputHash = Base64.getEncoder().encodeToString(hash);
-            return inputHash.equals(storedHash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error verifying password", e);
-        }
+        String inputHash = hashPassword(inputPassword);
+        return inputHash.equals(storedHash);
     }
-} 
+
+    private String generateToken() {
+        return UUID.randomUUID().toString();
+    }
+}
