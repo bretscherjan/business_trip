@@ -3,6 +3,7 @@ package ch.clip.trips.data;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Data
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id")
     private Long id;
 
     @Column(nullable = false)

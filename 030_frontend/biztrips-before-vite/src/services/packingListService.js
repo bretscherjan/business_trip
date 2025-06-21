@@ -1,45 +1,81 @@
+const API_BASE_URL = 'http://localhost:8080';
+
 export async function fetchPackingList(token, tripId) {
-  const res = await fetch(`/PackingList?tripId=${tripId}`, {
-    headers: { "Authorization": token }
+  console.log('Fetching packing list for trip:', tripId);
+  const res = await fetch(`${API_BASE_URL}/PackingList?tripId=${tripId}`, {
+    headers: { "Authorization": `Bearer ${token}` }
   });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Error fetching packing list:', res.status, errorText);
+    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  }
+  const data = await res.json();
+  console.log('Packing list data:', data);
+  return data;
 }
 
 export async function generatePackingList(token, tripId, generationData) {
-  const res = await fetch(`/PackingList/Generate?tripId=${tripId}`, {
+  console.log('Generating packing list for trip:', tripId, 'with data:', generationData);
+  const res = await fetch(`${API_BASE_URL}/PackingList/Generate?tripId=${tripId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": token },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify(generationData)
   });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Error generating packing list:', res.status, errorText);
+    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  }
+  const data = await res.json();
+  console.log('Generated packing list:', data);
+  return data;
 }
 
 export async function addPackingItem(token, tripId, item) {
-  const res = await fetch(`/PackingList/addItem?tripId=${tripId}`, {
+  console.log('Adding packing item for trip:', tripId, 'item:', item);
+  const res = await fetch(`${API_BASE_URL}/PackingList/addItem?tripId=${tripId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": token },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify(item)
   });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Error adding packing item:', res.status, errorText);
+    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  }
+  const data = await res.json();
+  console.log('Added packing item:', data);
+  return data;
 }
 
 export async function editPackingItem(token, tripId, id, item) {
-  const res = await fetch(`/PackingList/editItem/${id}?tripId=${tripId}`, {
+  console.log('Editing packing item:', id, 'for trip:', tripId, 'with data:', item);
+  const res = await fetch(`${API_BASE_URL}/PackingList/editItem/${id}?tripId=${tripId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": token },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify(item)
   });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Error editing packing item:', res.status, errorText);
+    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  }
+  const data = await res.json();
+  console.log('Edited packing item:', data);
+  return data;
 }
 
 export async function deletePackingItem(token, tripId, id) {
-  const res = await fetch(`/PackingList/${id}?tripId=${tripId}`, {
+  console.log('Deleting packing item:', id, 'for trip:', tripId);
+  const res = await fetch(`${API_BASE_URL}/PackingList/${id}?tripId=${tripId}`, {
     method: "DELETE",
-    headers: { "Authorization": token }
+    headers: { "Authorization": `Bearer ${token}` }
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Error deleting packing item:', res.status, errorText);
+    throw new Error(`HTTP ${res.status}: ${errorText}`);
+  }
+  console.log('Successfully deleted packing item:', id);
 } 

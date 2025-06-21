@@ -11,10 +11,12 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class GeneratePackigList {
 
     private List<PackingListItem> packingListItems;
+    private static final Logger LOGGER = Logger.getLogger(GeneratePackigList.class.getName());
 
     public GeneratePackigList(String ort, String geschlecht, String startdatum, String enddatum, String prompt){
         // API-Key
@@ -27,7 +29,7 @@ public class GeneratePackigList {
   "messages": [
                     {
                       "role": "user",
-                      "content": "Du bist eine hilfreiche KI, die Packlisten für Reisen erstellt. Bitte generiere eine einfache Liste von Strings – keine Erklärungen, keine Formatierung.\\\\n\\\\nHier sind die Reisedaten im JSON-Format:\\\\n{\\\\\\"ort\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"geschlecht\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Startdatum\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Enddatum\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Prompt\\\\\\": \\\\\\"%s\\\\\\"}"
+                      "content": "Du bist eine hilfreiche KI, die Packlisten für Reisen erstellt. Die Packliste sollte sich für eine Geschäftsreise eignen, welche jedoch auch privat nutzbar sein kann. Bitte generiere eine einfache Liste von Strings – keine Erklärungen, keine Formatierung.\\\\n\\\\nHier sind die Reisedaten im JSON-Format:\\\\n{\\\\\\"ort\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"geschlecht\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Startdatum\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Enddatum\\\\\\": \\\\\\"%s\\\\\\", \\\\\\"Prompt\\\\\\": \\\\\\"%s\\\\\\"}"
                     }
   ],
   "max_tokens": 512,
@@ -53,8 +55,15 @@ public class GeneratePackigList {
         HttpResponse<String> response = null;
         try {
             response = client.send(request, BodyHandlers.ofString());
+            LOGGER.info("API Response Status Code: " + response.statusCode());
+            LOGGER.info("API Response Body: " + response.body());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
+        }
+
+        if (response.statusCode() >= 400) {
+            // Handle error response from API
+            throw new RuntimeException("Error from AI API: " + response.body());
         }
 
         parseResponse(response.body());
@@ -64,22 +73,29 @@ public class GeneratePackigList {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode rootNode = mapper.readTree(aiResponse);
-
-            // Get the content from the response
-            String content = rootNode.path("choices")
-                    .get(0)
-                    .path("message")
-                    .path("content")
-                    .asText();
-
-            // Split the content by newlines and create PackingListItem objects
+    
+            if (!rootNode.has("choices") || rootNode.get("choices").size() == 0) {
+                throw new RuntimeException("Invalid AI response format - missing choices");
+            }
+    
+            JsonNode messageNode = rootNode.path("choices").get(0).path("message");
+            if (messageNode.isMissingNode()) {
+                throw new RuntimeException("Invalid AI response format - missing message");
+            }
+    
+            String content = messageNode.path("content").asText();
+            if (content == null || content.isEmpty()) {
+                throw new RuntimeException("Empty content in AI response");
+            }
+    
             packingListItems = new ArrayList<>();
             String[] items = content.split("\n");
-
+    
             for (String item : items) {
-                if (!item.trim().isEmpty()) {
+                String trimmedItem = item.trim();
+                if (!trimmedItem.isEmpty()) {
                     PackingListItem packingItem = new PackingListItem();
-                    packingItem.setName(item.trim());
+                    packingItem.setName(trimmedItem);
                     packingItem.setTickedOff(false);
                     packingListItems.add(packingItem);
                 }

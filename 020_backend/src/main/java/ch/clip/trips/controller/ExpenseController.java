@@ -26,6 +26,9 @@ public class ExpenseController {
 
     @PostMapping("")
     public ResponseEntity<?> createExpense(@RequestHeader("Authorization") String token, @RequestBody Expense expense) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }
@@ -38,6 +41,9 @@ public class ExpenseController {
 
     @GetMapping("/user/{tripId}")
     public ResponseEntity<?> getExpensesByUserAndTrip(@RequestHeader("Authorization") String token, @PathVariable Long tripId) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }
@@ -48,6 +54,9 @@ public class ExpenseController {
 
     @GetMapping("/trip/{tripId}")
     public ResponseEntity<?> getExpensesByTrip(@RequestHeader("Authorization") String token, @PathVariable Long tripId) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }
@@ -57,6 +66,9 @@ public class ExpenseController {
 
     @GetMapping("/sum/{tripId}")
     public ResponseEntity<?> getSumByUserAndTrip(@RequestHeader("Authorization") String token, @PathVariable Long tripId) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }
@@ -67,6 +79,9 @@ public class ExpenseController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExpense(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }
@@ -76,6 +91,9 @@ public class ExpenseController {
 
     @GetMapping("/trip/{tripId}/converted")
     public ResponseEntity<?> getExpensesByTripConverted(@RequestHeader("Authorization") String token, @PathVariable Long tripId, @RequestParam String to) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         if (!tokenService.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token ungültig");
         }

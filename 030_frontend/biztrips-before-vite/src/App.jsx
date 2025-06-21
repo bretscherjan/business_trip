@@ -8,6 +8,13 @@ import { fetchUsers, exportUsersCsv } from "./services/userService";
 import { fetchTrips, createTrip, updateTrip, deleteTrip } from "./services/tripService";
 import { fetchExpenses, createExpense, deleteExpense } from "./services/expenseService";
 import { fetchConvertedSums } from "./services/currencyService";
+import { 
+  fetchPackingList, 
+  generatePackingList,
+  addPackingItem,
+  editPackingItem,
+  deletePackingItem,
+} from "./services/packingListService";
 
 const trips = [
   {
@@ -260,14 +267,13 @@ function Trips({ token }) {
   const [form, setForm] = React.useState({ title: "", description: "", startDate: "", endDate: "", destination: "" });
   const [formError, setFormError] = React.useState("");
 
-  function loadTrips() {
+  React.useEffect(() => {
     setLoading(true);
     fetchTrips(token)
       .then(setTrips)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }
-  React.useEffect(loadTrips, [token]);
+  }, [token]);
 
   function handleNew() {
     setEditTrip(null);
@@ -290,7 +296,11 @@ function Trips({ token }) {
   async function handleDelete(id) {
     if (!window.confirm("Geschäftsreise wirklich löschen?")) return;
     await deleteTrip(id, token);
-    loadTrips();
+    setLoading(true);
+    fetchTrips(token)
+      .then(setTrips)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
   }
   async function handleSubmit(e) {
     e.preventDefault();
@@ -302,7 +312,11 @@ function Trips({ token }) {
         await createTrip(form, token);
       }
       setShowForm(false);
-      loadTrips();
+      setLoading(true);
+      fetchTrips(token)
+        .then(setTrips)
+        .catch(e => setError(e.message))
+        .finally(() => setLoading(false));
     } catch (err) {
       setFormError(err.message);
     }
@@ -389,35 +403,35 @@ function Expenses({ token }) {
   const [formError, setFormError] = React.useState("");
 
   React.useEffect(() => {
-    fetchTrips().then(setTrips).catch(() => {});
-  }, []);
+    fetchTrips(token).then(setTrips).catch(() => {});
+  }, [token]);
 
   React.useEffect(() => {
     if (selectedTrip) {
       setLoading(true);
-      fetchExpenses(selectedTrip)
+      fetchExpenses(token, selectedTrip)
         .then(setExpenses)
         .catch(e => setError(e.message))
         .finally(() => setLoading(false));
     } else {
       setExpenses([]);
     }
-  }, [selectedTrip]);
+  }, [selectedTrip, token]);
 
   async function handleDelete(id) {
     if (!window.confirm("Spese wirklich löschen?")) return;
-    await deleteExpense(id);
+    await deleteExpense(token, id);
     setExpenses(expenses => expenses.filter(e => e.id !== id));
   }
   async function handleSubmit(e) {
     e.preventDefault();
     setFormError("");
     try {
-      await createExpense({ ...form, tripId: selectedTrip });
+      await createExpense(token, { ...form, tripId: selectedTrip });
       setShowForm(false);
       setForm({ amount: "", currency: "CHF", description: "" });
       setLoading(true);
-      fetchExpenses(selectedTrip)
+      fetchExpenses(token, selectedTrip)
         .then(setExpenses)
         .catch(e => setError(e.message))
         .finally(() => setLoading(false));
@@ -456,14 +470,18 @@ function Expenses({ token }) {
               </tr>
             </thead>
             <tbody>
-              {expenses.map(e => (
-                <tr key={e.id}>
+              {expenses.map((e, idx) => (
+                <tr key={e.id ?? idx}>
                   <td style={{ padding: 8 }}>{e.amount}</td>
                   <td style={{ padding: 8 }}>{e.currency}</td>
                   <td style={{ padding: 8 }}>{e.description}</td>
                   <td style={{ padding: 8 }}>{e.date}</td>
                   <td style={{ padding: 8 }}>
-                    <button className="btn" onClick={() => handleDelete(e.id)}>Löschen</button>
+                    {e.id ? (
+                      <button className="btn" onClick={() => handleDelete(e.id)}>Löschen</button>
+                    ) : (
+                      <span style={{ color: 'gray' }}>Keine ID</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -510,14 +528,26 @@ function Currency({ token }) {
   const [error, setError] = React.useState("");
 
   React.useEffect(() => {
-    fetchTrips().then(setTrips).catch(() => {});
-  }, []);
+    fetchTrips(token).then(setTrips).catch(() => {});
+  }, [token]);
+
+  React.useEffect(() => {
+    if (selectedTrip && toCurrency) {
+      setLoading(true);
+      fetchConvertedSums(token, selectedTrip, toCurrency)
+        .then(setSums)
+        .catch(e => setError(e.message))
+        .finally(() => setLoading(false));
+    } else {
+      setSums(null);
+    }
+  }, [selectedTrip, toCurrency, token]);
 
   async function handleCalculate() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetchConvertedSums(selectedTrip, toCurrency);
+      const res = await fetchConvertedSums(token, selectedTrip, toCurrency);
       setSums(res);
     } catch (err) {
       setError(err.message);
@@ -576,58 +606,71 @@ function Currency({ token }) {
 function PackingList({ token }) {
   const [trips, setTrips] = React.useState([]);
   const [selectedTrip, setSelectedTrip] = React.useState("");
-  const [packingList, setPackingList] = React.useState([]);
+  const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [showGenForm, setShowGenForm] = React.useState(false);
-  const [genForm, setGenForm] = React.useState({ zielohrt: "", geschlecht: "", startDatum: "", endDatum: "", besonderheiten: "" });
-  const [addItemName, setAddItemName] = React.useState("");
-  const [editIdx, setEditIdx] = React.useState(null);
-  const [editName, setEditName] = React.useState("");
+  const [newItemName, setNewItemName] = React.useState("");
+  const [generationData, setGenerationData] = React.useState({
+    zielohrt: "",
+    geschlecht: "männlich",
+    startDatum: "",
+    endDatum: "",
+    besonderheiten: ""
+  });
 
-  React.useEffect(() => {
-    fetchTrips().then(setTrips).catch(() => {});
-  }, []);
+  useEffect(() => {
+    fetchTrips(token).then(setTrips).catch(err => setError("Reisen konnten nicht geladen werden."));
+  }, [token]);
 
-  React.useEffect(() => {
-    if (selectedTrip) {
-      setLoading(true);
-      setError("");
-      import("./services/packingListService").then(({ fetchPackingList }) =>
-        fetchPackingList(selectedTrip)
-          .then(setPackingList)
-          .catch(e => setPackingList([]))
-          .finally(() => setLoading(false))
-      );
-    } else {
-      setPackingList([]);
+  const fetchList = React.useCallback(async () => {
+    if (!selectedTrip) {
+      setItems([]);
+      return;
     }
-  }, [selectedTrip]);
-
-  function reload() {
-    if (selectedTrip) {
-      setLoading(true);
-      setError("");
-      import("./services/packingListService").then(({ fetchPackingList }) =>
-        fetchPackingList(selectedTrip)
-          .then(setPackingList)
-          .catch(e => setPackingList([]))
-          .finally(() => setLoading(false))
-      );
-    }
-  }
-
-  async function handleGenerate(e) {
-    e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const { generatePackingList } = await import("./services/packingListService");
-      await generatePackingList(selectedTrip, genForm);
-      setShowGenForm(false);
-      reload();
+      const data = await fetchPackingList(token, selectedTrip);
+      setItems(data);
     } catch (err) {
-      setError(err.message);
+      console.error("Fehler beim Laden der Packliste:", err);
+      setError("Packliste konnte nicht geladen werden: " + err.message);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedTrip]);
+
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
+  async function handleGenerate(e) {
+    e.preventDefault();
+    if (!selectedTrip) return;
+    setLoading(true);
+    setError("");
+    try {
+      // Konvertiere Datums-Strings zu LocalDate-Objekten
+      const dataToSend = {
+        ...generationData,
+        startDatum: generationData.startDatum ? new Date(generationData.startDatum) : null,
+        endDatum: generationData.endDatum ? new Date(generationData.endDatum) : null
+      };
+      
+      await generatePackingList(token, selectedTrip, dataToSend);
+      await fetchList();
+      // Reset form
+      setGenerationData({
+        zielohrt: "",
+        geschlecht: "männlich",
+        startDatum: "",
+        endDatum: "",
+        besonderheiten: ""
+      });
+    } catch (err) {
+      console.error("Fehler beim Generieren der Packliste:", err);
+      setError("Packliste konnte nicht generiert werden: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -635,62 +678,40 @@ function PackingList({ token }) {
 
   async function handleAddItem(e) {
     e.preventDefault();
-    if (!addItemName.trim()) return;
-    setLoading(true);
+    if (!newItemName || !selectedTrip) return;
     setError("");
     try {
-      const { addPackingItem } = await import("./services/packingListService");
-      await addPackingItem(selectedTrip, { name: addItemName, tickedOff: false });
-      setAddItemName("");
-      reload();
+      await addPackingItem(token, selectedTrip, { name: newItemName, tickedOff: false });
+      setNewItemName("");
+      await fetchList();
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error("Fehler beim Hinzufügen des Items:", err);
+      setError("Item konnte nicht hinzugefügt werden: " + err.message);
     }
   }
 
-  async function handleDeleteItem(idx) {
-    setLoading(true);
+  async function handleDeleteItem(itemId) {
     setError("");
     try {
-      const { deletePackingItem } = await import("./services/packingListService");
-      await deletePackingItem(selectedTrip, packingList[idx].id);
-      reload();
+      await deletePackingItem(token, selectedTrip, itemId);
+      await fetchList();
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error("Fehler beim Löschen des Items:", err);
+      setError("Item konnte nicht gelöscht werden: " + err.message);
     }
   }
 
-  async function handleEditItem(idx) {
-    setLoading(true);
+  async function handleToggleTicked(item) {
     setError("");
     try {
-      const { editPackingItem } = await import("./services/packingListService");
-      await editPackingItem(selectedTrip, packingList[idx].id, { name: editName, tickedOff: packingList[idx].tickedOff });
-      setEditIdx(null);
-      setEditName("");
-      reload();
+      await editPackingItem(token, selectedTrip, item.id, { 
+        name: item.name, 
+        tickedOff: !item.tickedOff 
+      });
+      await fetchList();
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleToggleTicked(idx) {
-    setLoading(true);
-    setError("");
-    try {
-      const { editPackingItem } = await import("./services/packingListService");
-      await editPackingItem(selectedTrip, packingList[idx].id, { name: packingList[idx].name, tickedOff: !packingList[idx].tickedOff });
-      reload();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.error("Fehler beim Aktualisieren des Items:", err);
+      setError("Item konnte nicht aktualisiert werden: " + err.message);
     }
   }
 
@@ -699,118 +720,141 @@ function PackingList({ token }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/PackingList/?tripId=${selectedTrip}`, {
+      // Verwende den deleteAll Endpoint
+      const res = await fetch(`http://localhost:8080/PackingList/?tripId=${selectedTrip}`, {
         method: "DELETE",
-        headers: { "Authorization": token }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) throw new Error(await res.text());
-      reload();
+      await fetchList();
     } catch (err) {
-      setError(err.message);
+      console.error("Fehler beim Löschen aller Items:", err);
+      setError("Items konnten nicht gelöscht werden: " + err.message);
     } finally {
       setLoading(false);
     }
   }
 
+  if (error) return <main><div role="alert" style={{color: 'red', padding: '10px', backgroundColor: '#ffe6e6', border: '1px solid #ff9999', borderRadius: '4px'}}>{error}</div></main>;
+
   return (
     <main>
       <h2>Packliste</h2>
-      <div style={{ marginBottom: 16 }}>
-        <label>Geschäftsreise:&nbsp;</label>
-        <select value={selectedTrip} onChange={e => setSelectedTrip(e.target.value)}>
+
+      <div style={{ marginBottom: 24 }}>
+        <label htmlFor="trip-select" style={{ marginRight: 8 }}>Geschäftsreise auswählen:</label>
+        <select id="trip-select" value={selectedTrip} onChange={e => setSelectedTrip(e.target.value)}>
           <option value="">Bitte wählen...</option>
-          {trips.map(t => (
-            <option key={t.id} value={t.id}>{t.title} ({t.destination})</option>
-          ))}
+          {trips.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
         </select>
-        {selectedTrip && (
-          <>
-            <button className="btn" style={{ marginLeft: 16 }} onClick={() => setShowGenForm(s => !s)}>
-              {showGenForm ? "Abbrechen" : "Packliste generieren (KI)"}
-            </button>
-            <button className="btn" style={{ marginLeft: 8 }} onClick={handleDeleteAll}>Alle löschen</button>
-          </>
-        )}
       </div>
-      {showGenForm && (
-        <form onSubmit={handleGenerate} style={{ background: "#fff", border: "1px solid #eaeaea", borderRadius: 8, padding: 16, marginBottom: 16, maxWidth: 500 }}>
-          <h4>Packliste generieren (KI)</h4>
-          <div>
-            <label>Zielort</label>
-            <input value={genForm.zielohrt} onChange={e => setGenForm(f => ({ ...f, zielohrt: e.target.value }))} required />
-          </div>
-          <div>
-            <label>Geschlecht</label>
-            <select value={genForm.geschlecht} onChange={e => setGenForm(f => ({ ...f, geschlecht: e.target.value }))} required>
-              <option value="">Bitte wählen...</option>
-              <option value="männlich">Männlich</option>
-              <option value="weiblich">Weiblich</option>
-              <option value="divers">Divers</option>
-            </select>
-          </div>
-          <div>
-            <label>Startdatum</label>
-            <input type="date" value={genForm.startDatum} onChange={e => setGenForm(f => ({ ...f, startDatum: e.target.value }))} required />
-          </div>
-          <div>
-            <label>Enddatum</label>
-            <input type="date" value={genForm.endDatum} onChange={e => setGenForm(f => ({ ...f, endDatum: e.target.value }))} required />
-          </div>
-          <div>
-            <label>Besonderheiten</label>
-            <input value={genForm.besonderheiten} onChange={e => setGenForm(f => ({ ...f, besonderheiten: e.target.value }))} />
-          </div>
-          <button className="btn" type="submit">Generieren</button>
-        </form>
-      )}
-      {error && <div role="alert" style={{ color: "red" }}>{error}</div>}
-      {loading && <p>Lade...</p>}
-      {selectedTrip && !loading && (
+
+      {selectedTrip && (
         <>
-          <form onSubmit={handleAddItem} style={{ marginBottom: 16 }}>
-            <input value={addItemName} onChange={e => setAddItemName(e.target.value)} placeholder="Neues Item..." required />
-            <button className="btn" type="submit">Hinzufügen</button>
+          <form onSubmit={handleGenerate} style={{ marginBottom: 24, padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+            <h3>KI-Packliste generieren</h3>
+            <p>Fülle die Felder aus, damit die KI eine passende Packliste erstellen kann.</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label htmlFor="zielort">Zielort:</label>
+                <input 
+                  id="zielort"
+                  value={generationData.zielohrt} 
+                  onChange={e => setGenerationData({...generationData, zielohrt: e.target.value})} 
+                  placeholder="z.B. Berlin"
+                  style={{ width: '100%', padding: '8px' }}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="geschlecht">Geschlecht:</label>
+                <select 
+                  id="geschlecht"
+                  value={generationData.geschlecht} 
+                  onChange={e => setGenerationData({...generationData, geschlecht: e.target.value})}
+                  style={{ width: '100%', padding: '8px' }}
+                >
+                  <option value="männlich">Männlich</option>
+                  <option value="weiblich">Weiblich</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="startdatum">Startdatum:</label>
+                <input 
+                  id="startdatum"
+                  type="date"
+                  value={generationData.startDatum} 
+                  onChange={e => setGenerationData({...generationData, startDatum: e.target.value})} 
+                  style={{ width: '100%', padding: '8px' }}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="enddatum">Enddatum:</label>
+                <input 
+                  id="enddatum"
+                  type="date"
+                  value={generationData.endDatum} 
+                  onChange={e => setGenerationData({...generationData, endDatum: e.target.value})} 
+                  style={{ width: '100%', padding: '8px' }}
+                />
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label htmlFor="besonderheiten">Besonderheiten:</label>
+              <textarea 
+                id="besonderheiten"
+                value={generationData.besonderheiten} 
+                onChange={e => setGenerationData({...generationData, besonderheiten: e.target.value})} 
+                placeholder="z.B. Konferenz, Winter, formelle Kleidung"
+                style={{ width: '100%', padding: '8px', minHeight: '60px' }}
+              />
+            </div>
+            
+            <button type="submit" className="btn" disabled={loading}>
+              {loading ? "Generiere..." : "KI-Packliste generieren"}
+            </button>
           </form>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 400 }}>
-              <thead>
-                <tr style={{ background: "#f6f6f6" }}>
-                  <th style={{ textAlign: "left", padding: 8 }}>Erledigt</th>
-                  <th style={{ textAlign: "left", padding: 8 }}>Name</th>
-                  <th style={{ textAlign: "left", padding: 8 }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {packingList.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={{ padding: 8 }}>
-                      <input type="checkbox" checked={item.tickedOff} onChange={() => handleToggleTicked(idx)} />
-                    </td>
-                    <td style={{ padding: 8 }}>
-                      {editIdx === idx ? (
-                        <input value={editName} onChange={e => setEditName(e.target.value)} />
-                      ) : (
-                        item.name
-                      )}
-                    </td>
-                    <td style={{ padding: 8 }}>
-                      {editIdx === idx ? (
-                        <>
-                          <button className="btn" onClick={() => handleEditItem(idx)}>Speichern</button>
-                          <button className="btn" onClick={() => { setEditIdx(null); setEditName(""); }}>Abbrechen</button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="btn" onClick={() => { setEditIdx(idx); setEditName(item.name); }}>Bearbeiten</button>
-                          <button className="btn" onClick={() => handleDeleteItem(idx)}>Löschen</button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
+
+          <form onSubmit={handleAddItem} style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            <input 
+              value={newItemName} 
+              onChange={e => setNewItemName(e.target.value)} 
+              placeholder="Neuen Gegenstand hinzufügen" 
+              style={{ flexGrow: 1, padding: '8px' }}
+            />
+            <button type="submit" className="btn-secondary" disabled={!newItemName}>Hinzufügen</button>
+          </form>
+
+          {loading && <p>Lade Packliste...</p>}
+          
+          {items.length > 0 && (
+            <>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {items.map((item) => (
+                  <li key={item.id || item.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={item.tickedOff} 
+                      onChange={() => handleToggleTicked(item)} 
+                      style={{ width: 20, height: 20 }}
+                    />
+                    <span style={{ flexGrow: 1, textDecoration: item.tickedOff ? 'line-through' : 'none' }}>
+                      {item.name}
+                    </span>
+                    <button onClick={() => handleDeleteItem(item.id)} className="btn-danger" style={{ padding: '4px 8px' }}>Löschen</button>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </ul>
+              <button onClick={handleDeleteAll} className="btn-danger" style={{ marginTop: 24 }}>
+                Ganze Liste löschen
+              </button>
+            </>
+          )}
         </>
       )}
     </main>

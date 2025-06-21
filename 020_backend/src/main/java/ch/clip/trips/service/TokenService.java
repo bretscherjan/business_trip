@@ -15,29 +15,42 @@ public class TokenService {
     private static final long EXPIRATION_TIME = 86400000; // 1 Tag in Millisekunden
 
     public String generateToken(User user) {
-        return Jwts.builder()
+        System.out.println("Generating token for user: " + user.getUsername() + " with ID: " + user.getId());
+        String token = Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("userId", user.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
                 .compact();
+        System.out.println("Generated token: " + token);
+        return token;
     }
 
     public boolean validateToken(String token) {
         try {
+            System.out.println("Validating token: " + token);
             Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+            System.out.println("Token validation successful");
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            System.out.println("Token validation failed: " + e.getMessage());
             return false;
         }
     }
 
     public Long getUserIdFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody()
-                .get("userId", Long.class);
+        try {
+            Long userId = Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("userId", Long.class);
+            System.out.println("Extracted user ID from token: " + userId);
+            return userId;
+        } catch (Exception e) {
+            System.out.println("Error extracting user ID from token: " + e.getMessage());
+            throw e;
+        }
     }
 }

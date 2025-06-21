@@ -24,6 +24,7 @@ ch\clip\trips\data\PackingListItem.class
 ch\clip\trips\data\User$Role.class
 ch\clip\trips\service\UserService.class
 ch\clip\trips\controller\LoginController$RegisterRequest.class
+ch\clip\trips\service\CurrencyService$1.class
 ch\clip\trips\data\PackingListItemData.class
 ch\clip\trips\repository\UserRepository.class
 ch\clip\trips\repository\PackingListItemRepository.class

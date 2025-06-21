@@ -35,7 +35,7 @@ CREATE TABLE user_business_trip (
     trip_id BIGINT NOT NULL,
     PRIMARY KEY (user_id, trip_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (trip_id) REFERENCES business_trip(id)
+    FOREIGN KEY (trip_id) REFERENCES business_trip(id) ON DELETE CASCADE
 );
 
 CREATE TABLE packing_list (
@@ -48,13 +48,15 @@ CREATE TABLE packing_list (
     FOREIGN KEY (trip_id) REFERENCES business_trip(id)
 );
 
-CREATE TABLE receipt (
+CREATE TABLE expenses (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
     amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL,
+    description TEXT,
+    image_url VARCHAR(255),
     user_id BIGINT NOT NULL,
     trip_id BIGINT NOT NULL,
+    date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (trip_id) REFERENCES business_trip(id)
 );
