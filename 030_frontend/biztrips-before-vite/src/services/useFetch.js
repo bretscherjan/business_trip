@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = "http://localhost:8080";
 
 export default function useFetch(url) {
   const [data, setData] = useState(null);
@@ -11,7 +11,7 @@ export default function useFetch(url) {
   useEffect(() => {
     async function init() {
       try {
-        const response = await fetch(baseUrl + url);
+        const response = await fetch(`${baseUrl}/${url}`);
         if (response.ok) {
           const json = await response.json();
           setData(json);

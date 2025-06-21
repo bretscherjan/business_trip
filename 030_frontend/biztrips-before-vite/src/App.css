@@ -1,48 +1,75 @@
-html {
+html, body, #root {
   height: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
   font-family: open sans, sans-serif;
   font-size: 14px;
   line-height: 1.42857143;
-  margin: 0;
-  padding: 0;
-  color: #364147;
+  color: #111;
   background-color: #fff;
 }
 
 #root {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Avoid the IE 10-11 `min-height` bug. */
+  flex: 1 1 auto;
+  min-height: 100vh;
 }
 
-.content {
-  flex: 1 0 auto;
-  padding: 20px;
-}
-
-header {
+main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 32px 16px;
+  box-sizing: border-box;
   display: flex;
-  padding-left: 20px;
-}
-
-header img {
-  max-height: 100px;
-}
-
-nav {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
 footer {
   text-align: center;
-  color: gray;
-  padding: 20px 0 20px 0;
+  color: #fff;
+  padding: 20px 0;
   flex-shrink: 0;
-  background-color: gainsboro;
+  background-color: #111;
+  width: 100%;
+  margin-top: auto;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #111;
+  color: #fff;
+  min-height: 64px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+header img {
+  max-height: 48px;
+}
+
+nav ul {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+nav li {
+  margin-right: 32px;
 }
 
 header ul {
@@ -71,10 +98,29 @@ header li {
 }
 
 .product {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 24px;
+  max-width: 340px;
+  flex: 1 1 300px;
   display: flex;
-  align-items: flex-end;
-  max-width: 350px;
-  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+.product:hover {
+  box-shadow: 0 4px 16px rgba(39,174,96,0.10);
+  border-color: #27ae60;
+}
+.product img {
+  border-radius: 6px;
+  margin-bottom: 16px;
+  max-height: 180px;
+}
+.product figcaption {
+  color: #111;
 }
 
 #cart img {
@@ -96,34 +142,22 @@ input[type="number"] {
   width: 50px;
 }
 
-main {
-  padding: 20px;
-}
-
-.cart-item {
-  display: flex;
-  margin-bottom: 20px;
-}
-
 a {
-  color: #faa541;
+  color: #27ae60;
   text-decoration: none;
+  transition: color 0.2s;
 }
-
-h1 {
-  font-size: 36px;
-}
-
-h3 {
-  font-size: 24px;
+a:hover {
+  color: #219150;
 }
 
 h1,
 h2,
 h3 {
+  color: #111;
+  font-weight: 600;
   margin-top: 20px;
   margin-bottom: 10px;
-  font-weight: normal;
 }
 
 img {
@@ -133,31 +167,19 @@ img {
   vertical-align: middle;
 }
 
-.btn-primary {
+.btn-primary, .btn {
   color: #fff;
-  background-color: #364147;
-}
-
-.btn {
-  display: inline-block;
-  margin-bottom: 0;
-  font-weight: 400;
-  text-align: center;
-  vertical-align: middle;
-  -ms-touch-action: manipulation;
-  touch-action: manipulation;
+  background-color: #27ae60;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  background-image: none;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  padding: 6px 12px;
-  font-size: 14px;
-  line-height: 1.42857143;
-  border-radius: 3px;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  transition: background 0.2s;
+}
+.btn-primary:hover, .btn:hover {
+  background-color: #219150;
 }
 
 .btn.disabled,
@@ -215,5 +237,60 @@ form > div {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+section#products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: flex-start;
+}
+
+#filters {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#filters label {
+  font-weight: 600;
+  color: #111;
+}
+#filters select {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #eaeaea;
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  main {
+    padding: 16px 4px;
+  }
+  section#products {
+    gap: 16px;
+  }
+  .product {
+    padding: 12px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    min-height: 48px;
+    padding: 0 8px;
+  }
+  main {
+    padding: 8px 2px;
+  }
+  section#products {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .product {
+    padding: 8px;
   }
 }

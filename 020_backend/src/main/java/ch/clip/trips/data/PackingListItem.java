@@ -22,4 +22,13 @@ public class PackingListItem {
 
     @Column(name = "trip_id", nullable = false)
     private Long tripId;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public boolean isTickedOff() { return tickedOff; }
+    public void setTickedOff(boolean tickedOff) { this.tickedOff = tickedOff; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+    public Long getTripId() { return tripId; }
+    public void setTripId(Long tripId) { this.tripId = tripId; }
 } 

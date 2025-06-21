@@ -15,7 +15,10 @@ CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    token VARCHAR(255) DEFAULT NULL
+    role VARCHAR(255) NOT NULL CHECK (role IN ('TEAMLEAD', 'MITARBEITER')),
+    token VARCHAR(255) DEFAULT NULL,
+    email VARCHAR(255),  -- Removed NOT NULL constraint
+    phone_number VARCHAR(255)
 );
 
 CREATE TABLE business_trip (

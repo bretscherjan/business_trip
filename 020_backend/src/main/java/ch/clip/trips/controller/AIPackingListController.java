@@ -61,10 +61,16 @@ public class AIPackingListController {
         
         Long userId = tokenService.getUserIdFromToken(token);
         // AI Abfrage
-        GeneratePackigList generatePackigList = new GeneratePackigList(generationData.getZielohrt(), generationData.getGeschlecht(), generationData.getStartDatum(), generationData.getEndDatum(), generationData.getBesonderheiten());
+        GeneratePackigList generatePackingList = new GeneratePackigList(
+            generationData.getZielohrt(),
+            generationData.getGeschlecht(),
+            generationData.getStartDatum() != null ? generationData.getStartDatum().toString() : null,
+            generationData.getEndDatum() != null ? generationData.getEndDatum().toString() : null,
+            generationData.getBesonderheiten()
+        );
         
         List<PackingListItem> savedItems = new ArrayList<>();
-        for (PackingListItem element : generatePackigList.getPackingListItems()) {
+        for (PackingListItem element : generatePackingList.getPackingListItems()) {
             element.setUserId(userId);
             element.setTripId(tripId);
             PackingListItem savedItem = packingListItemRepository.save(element);
