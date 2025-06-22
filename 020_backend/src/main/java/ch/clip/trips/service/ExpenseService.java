@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ExpenseService {
@@ -35,5 +36,15 @@ public class ExpenseService {
     public double sumExpensesByUserAndTrip(Long userId, Long tripId) {
         return expenseRepository.findByUserIdAndTripId(userId, tripId)
                 .stream().mapToDouble(Expense::getAmount).sum();
+    }
+
+    public double sumExpensesByTrip(Long tripId) {
+        return expenseRepository.findByTripId(tripId)
+                .stream().mapToDouble(Expense::getAmount).sum();
+    }
+
+    public Expense getExpenseById(Long id) {
+        Optional<Expense> expense = expenseRepository.findById(id);
+        return expense.orElse(null);
     }
 } 

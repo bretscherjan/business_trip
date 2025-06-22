@@ -1,7 +1,9 @@
 ch\clip\trips\BusinessTripsBackendApplication.class
 ch\clip\trips\controller\UserController.class
 ch\clip\trips\service\TokenService.class
+ch\clip\trips\controller\CurrencyController.class
 ch\clip\trips\controller\AIPackingListController.class
+ch\clip\trips\controller\ExpenseController$CurrencyConversionRequest.class
 ch\clip\trips\service\GeneratePackigList.class
 ch\clip\trips\SpringWebConfig.class
 ch\clip\trips\controller\LoginController$LoginRequest.class

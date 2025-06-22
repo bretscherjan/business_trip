@@ -19,6 +19,7 @@ public class TokenService {
         String token = Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("userId", user.getId())
+                .claim("userRole", user.getRole().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
@@ -50,6 +51,21 @@ public class TokenService {
             return userId;
         } catch (Exception e) {
             System.out.println("Error extracting user ID from token: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public String getUserRoleFromToken(String token) {
+        try {
+            String userRole = Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("userRole", String.class);
+            System.out.println("Extracted user role from token: " + userRole);
+            return userRole;
+        } catch (Exception e) {
+            System.out.println("Error extracting user role from token: " + e.getMessage());
             throw e;
         }
     }
