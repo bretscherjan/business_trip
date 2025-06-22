@@ -24,11 +24,6 @@ export default function Header({ isLoggedIn, onLogout }) {
           {!isLoggedIn && (
             <>
               <li className="nav-item">
-                <a href="/login" className="nav-link login-link">
-                  <span className="nav-text">Login</span>
-                </a>
-              </li>
-              <li className="nav-item">
                 <a href="/register" className="nav-link register-link">
                   <span className="nav-text">Registrieren</span>
                 </a>

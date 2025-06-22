@@ -549,11 +549,11 @@ tbody tr:hover {
 }
 
 .currency-input-group input {
-  flex: 1;
+  min-width: 20px;
 }
 
 .currency-input-group select {
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .currency-arrow {
