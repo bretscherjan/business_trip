@@ -13,6 +13,15 @@ public class SpringWebConfig implements WebMvcConfigurer {
 	 */
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		// Allgemeine CORS-Konfiguration für alle Endpunkte
+		registry.addMapping("/**")
+			.allowedOrigins("http://localhost:3000", "http://localhost:8080")
+			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+			.allowedHeaders("*")
+			.allowCredentials(true)
+			.maxAge(3600);
+			
+		// Spezifische Konfigurationen (falls benötigt)
 		registry.addMapping("/trips/**")
 			.allowedOrigins("http://localhost:3000", "http://localhost:8080")
 			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
@@ -21,6 +30,13 @@ public class SpringWebConfig implements WebMvcConfigurer {
 			.maxAge(3600);
 			
 		registry.addMapping("/meeting/**")
+			.allowedOrigins("http://localhost:3000", "http://localhost:8080")
+			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+			.allowedHeaders("*")
+			.allowCredentials(true)
+			.maxAge(3600);
+			
+		registry.addMapping("/PackingList/**")
 			.allowedOrigins("http://localhost:3000", "http://localhost:8080")
 			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 			.allowedHeaders("*")

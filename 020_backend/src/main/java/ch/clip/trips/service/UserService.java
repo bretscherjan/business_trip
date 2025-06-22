@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,12 +32,65 @@ public class UserService {
         return null;
     }
 
+    public User register(String username, String email, String password, String firstName, String lastName) {
+        // Prüfe ob Benutzer bereits existiert
+        if (userRepository.existsByUsername(username)) {
+            throw new RuntimeException("Benutzername bereits vergeben");
+        }
+        
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email bereits vergeben");
+        }
+
+        // Erstelle neuen Benutzer
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPasswordHash(hashPassword(password));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(User.UserRole.MITARBEITER); // Standardrolle
+
+        return userRepository.save(user);
+    }
+
     public void logout(String token) {
         User user = userRepository.findByToken(token);
         if (user != null) {
             user.setToken(null);
             userRepository.save(user);
         }
+    }
+
+    public User getUserByToken(String token) {
+        return userRepository.findByToken(token);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public List<User> getUsersByRole(User.UserRole role) {
+        return userRepository.findByRole(role);
+    }
+
+    public User updateUserRole(Long userId, User.UserRole newRole) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+        user.setRole(newRole);
+        return userRepository.save(user);
+    }
+
+    public boolean hasRole(User user, User.UserRole role) {
+        return user != null && user.getRole() == role;
+    }
+
+    public boolean isAdmin(User user) {
+        return hasRole(user, User.UserRole.ADMIN);
+    }
+
+    public boolean isManager(User user) {
+        return hasRole(user, User.UserRole.MANAGER) || isAdmin(user);
     }
 
     public String hashPassword(String password) {

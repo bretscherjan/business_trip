@@ -3,6 +3,7 @@ SET REFERENTIAL_INTEGRITY FALSE;
 
 -- Drop tables in correct order (dependent tables first)
 DROP TABLE IF EXISTS packing_list;
+DROP TABLE IF EXISTS meeting;
 DROP TABLE IF EXISTS user_business_trip;
 DROP TABLE IF EXISTS business_trip;
 DROP TABLE IF EXISTS users;
@@ -13,18 +14,30 @@ SET REFERENTIAL_INTEGRITY TRUE;
 -- Create tables
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    token VARCHAR(255) DEFAULT NULL
+    email VARCHAR(255) NOT NULL UNIQUE,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    role VARCHAR(50) NOT NULL DEFAULT 'MITARBEITER',
+    token VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE business_trip (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    title VARCHAR(255) NOT NULL,
+    code VARCHAR(255),
     description TEXT,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    destination VARCHAR(255) NOT NULL
+    start_date TIMESTAMP,
+    end_date TIMESTAMP
+);
+
+CREATE TABLE meeting (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255),
+    description TEXT,
+    business_trip_id BIGINT,
+    FOREIGN KEY (business_trip_id) REFERENCES business_trip(id)
 );
 
 CREATE TABLE user_business_trip (
