@@ -49,3 +49,5 @@ Diese Applikation unterstützt die Organisation und Verwaltung von Geschäftsrei
 
 - Die Applikation ist modular aufgebaut, sodass weitere Features (z.B. Restaurant- und Hotelempfehlungen) einfach ergänzt werden können.
 - Die Kommunikation zwischen Frontend und Backend erfolgt über REST-APIs.
+
+&copy; Bretscher Jan, Brunner Fiona, Seitz Cyril
